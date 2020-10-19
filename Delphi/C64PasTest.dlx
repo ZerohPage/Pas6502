@@ -1,0 +1,17 @@
+C64PasTest
+exe
+false
+C64PasTest.dpr
+C64PasTest.dlx
+D:\Dev\c64\C64Pas\
+Unit1.pas,C64.pas
+D:\Dev\c64\C64Pas\delux\
+TextBox
+false
+false
+1
+DefaultNamespace
+true
+false
+
+TForm1

@@ -1,0 +1,226 @@
+unit C64;
+
+interface
+uses
+  Classes,
+  Windows,
+  Sysutils,
+  Dialogs;
+
+
+const
+    ADDR_BORDERCOLOR      = $d020;
+    ADDR_SCREENCOLOR      = $d021;
+    ADDR_SCREENMEMORY     = $0400;
+
+type TC64 = class
+  private
+    FFileStream     : TFilestream;
+    FHi             : Byte;
+    FLo             : Byte;
+    FOutputFileName : string;
+    FProgramStart   : word;
+    FLabels         : TStrings;
+
+    procedure       writeaddress(aAddress : word);
+    procedure       writeOp     (aOp      : Byte);
+    function        wordtotext  (aWord    : Word):string;
+  public
+    procedure ProgramStart(StartAddress : Word);
+    procedure lda(value     : Byte);
+    procedure ldx(value     : Byte);
+    procedure sta(addr      : word);
+    procedure stx(addr      : word);
+    procedure jmp(lblname   : string);
+    procedure inx;
+    procedure ora(value : Byte);
+    procedure imm(op, value : byte);
+    procedure _abs(op: Byte ; addr: Word);
+    procedure lbl(LabName : string);
+    procedure rts;
+    procedure sei;
+    procedure cli;
+    procedure org(addr      : Word);
+    procedure jsr(lblname   : string);
+    function  GetProgramPosition : Word;
+    function  GetLabelPosition (LabName : string)   : Word;
+    property  OutputFileName : string     read FOutputFileName    write FOutputFileName; 
+    destructor destroy;
+end;
+
+implementation
+
+const
+    OP_ORA    = $09;
+    OP_JSR    = $20;
+    OP_STA    = $8d;
+    OP_STX    = $8e;
+    OP_JMP    = $4C;
+    OP_RTS    = $60;
+    OP_LDA    = $a9;
+    OP_LDX    = $a2;
+    OP_INX    = $E8;
+    OP_BIT    = $2C;
+    OP_SEI    = $78;
+    OP_CLI    = $58;
+
+{ TC64 }
+        
+function TC64.wordtotext(aWord: word): string;
+var
+  buffer    : string;
+  i         : Integer;
+  tempchr   : byte;
+begin
+  //SHOWMESSAGE(inttostr(aWord));
+  buffer := IntToStr(aWord);
+  for i := 1 to Length(buffer) do
+  begin
+    tempchr := Ord(buffer[i]) ;
+    FFileStream.Write(tempchr,1);
+    //ShowMessage(IntToStr(tempchr));
+  end;  
+end;
+
+procedure TC64.cli;
+begin
+  writeOp(OP_CLI);
+end;
+
+destructor TC64.destroy;
+begin
+  FFileStream.Free;
+  FLabels.Free;
+end;
+
+function TC64.GetLabelPosition(LabName : string): Word;
+begin
+  result := strtoint(FLabels.values[LabName]);
+end;
+
+function TC64.GetProgramPosition: Word;
+begin
+  Result := $0801 + FFileStream.Position-2;
+end;
+
+procedure TC64.imm(op, value: byte);
+begin
+  writeOp(op);
+  FFileStream.Write(value,1);
+end;
+
+procedure TC64.inx;
+begin
+  writeOp(OP_INX);
+end;
+
+procedure TC64.jmp(lblname : string);
+begin
+  _abs(OP_JMP,GetLabelPosition(lblname));
+end;
+
+procedure TC64.jsr(lblname : string);
+begin
+  _abs(OP_JSR,GetLabelPosition(lblname));
+end;
+
+procedure TC64.lbl(LabName: string);
+begin
+  FLabels.Values[LabName] := IntToStr(GetProgramPosition);
+ // ShowMessage(FLabels.Values[LabName]);
+end;
+
+procedure TC64.lda(value: Byte);
+begin
+  imm(OP_LDA,value);
+end;
+
+procedure TC64.ldx(value: Byte);
+begin
+  imm(OP_LDX,value);
+end;
+
+procedure TC64.ora(value: Byte);
+begin
+  imm(OP_ORA,value);
+end;
+
+procedure TC64.ProgramStart(StartAddress : Word);
+var
+  buffer : byte;  
+begin
+  FLabels           := TStringList.Create;
+  FFileStream       := TFileStream.Create('out.prg',fmOpenWrite or fmCreate);
+  //FProgramStart     := StartAddress;
+  FProgramStart     := StartAddress;
+  // $1D, $08, $0A, $00, $9E, $20
+  writeaddress($0801);
+  buffer := $1d;
+  FFileStream.Write(buffer,1);
+  buffer := $08;
+  FFileStream.Write(buffer,1);
+  buffer := $0a;
+  FFileStream.Write(buffer,1);
+  buffer := $00;
+  FFileStream.Write(buffer,1);
+  buffer := $9e;
+  FFileStream.Write(buffer,1);
+  buffer := $20;
+  FFileStream.Write(buffer,1);
+
+  wordtotext(StartAddress);
+  FFileStream.Position := StartAddress-$0801 + 2;
+  //writeaddress(StartAddress);
+
+  FOutputFileName   := 'out.prg';
+  //
+end;
+
+procedure TC64.rts;
+begin
+  writeOp(OP_RTS);
+end;
+
+procedure TC64.sei;
+begin
+  writeOp(OP_SEI);
+end;
+
+procedure TC64.sta(addr: word);
+begin
+  _abs(OP_STA,addr);
+end;
+
+procedure TC64.stx(addr: word);
+begin
+  _abs(OP_STX,addr);
+end;
+
+procedure TC64.writeaddress(aAddress : word);
+var
+  loByte          : Byte;
+  hiByte          : Byte;
+begin
+   HiByte         := Hi(aAddress);
+   loByte         := Lo(aAddress);
+   FFileStream.Write(loByte,1);
+   FFileStream.Write(hiByte,1);
+end;
+
+procedure TC64.writeOp(aOp: Byte);
+begin
+  FFileStream.Write(aOp,SizeOf(aOp));
+end;
+
+procedure TC64._abs(op: Byte ; addr: Word);
+begin
+  writeOp(op);
+  FFileStream.Write(addr,2);
+end;
+
+procedure TC64.org(addr: Word);
+begin
+  FFileStream.Position := addr - $0801;
+end;
+
+end.
