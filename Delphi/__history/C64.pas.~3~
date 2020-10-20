@@ -40,7 +40,6 @@ type TC64 = class
     procedure rts;
     procedure sei;
     procedure cli;
-    procedure brk;
     procedure org(addr      : Word);
     procedure jsr(lblname   : string);
     function  GetProgramPosition : Word;
@@ -52,7 +51,6 @@ end;
 implementation
 
 const
-    OP_BRK    = $00;
     OP_ORA    = $09;
     OP_JSR    = $20;
     OP_STA    = $8d;
@@ -82,11 +80,6 @@ begin
     FFileStream.Write(tempchr,1);
     //ShowMessage(IntToStr(tempchr));
   end;  
-end;
-
-procedure TC64.brk;
-begin
-  writeOp(OP_BRK);
 end;
 
 procedure TC64.cli;

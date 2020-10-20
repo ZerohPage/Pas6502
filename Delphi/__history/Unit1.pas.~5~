@@ -75,7 +75,7 @@ begin
   C64.org($2000);
 
   //Shellexecute(H,PChar('open'),PChar('D:\Games\c64\WinVICE-2.4.12\x64.exe'),pchar(extractfilepath(application.exename) + '\' + C64.OutputFileName),'',SW_SHOWNORMAL);
-  ShellExecute(Handle, 'open',pchar(extractfilepath(application.exename) + '\' + C64.OutputFileName),nil,nil,SW_SHOWNORMAL) ;
+  ShellExecute(Handle, 'open',extractfilepath(application.exename) + '\' + C64.OutputFileName,nil,nil,SW_SHOWNORMAL) ;
   Close;
 
 

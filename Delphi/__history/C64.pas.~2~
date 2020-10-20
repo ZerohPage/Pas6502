@@ -34,13 +34,12 @@ type TC64 = class
     procedure jmp(lblname   : string);
     procedure inx;
     procedure ora(value : Byte);
-    procedure immediate(op, value : byte);
+    procedure imm(op, value : byte);
     procedure _abs(op: Byte ; addr: Word);
     procedure lbl(LabName : string);
     procedure rts;
     procedure sei;
     procedure cli;
-    procedure brk;
     procedure org(addr      : Word);
     procedure jsr(lblname   : string);
     function  GetProgramPosition : Word;
@@ -52,7 +51,6 @@ end;
 implementation
 
 const
-    OP_BRK    = $00;
     OP_ORA    = $09;
     OP_JSR    = $20;
     OP_STA    = $8d;
@@ -82,11 +80,6 @@ begin
     FFileStream.Write(tempchr,1);
     //ShowMessage(IntToStr(tempchr));
   end;  
-end;
-
-procedure TC64.brk;
-begin
-  writeOp(OP_BRK);
 end;
 
 procedure TC64.cli;
@@ -139,17 +132,17 @@ end;
 
 procedure TC64.lda(value: Byte);
 begin
-  immediate(OP_LDA,value);
+  imm(OP_LDA,value);
 end;
 
 procedure TC64.ldx(value: Byte);
 begin
-  immediate(OP_LDX,value);
+  imm(OP_LDX,value);
 end;
 
 procedure TC64.ora(value: Byte);
 begin
-  immediate(OP_ORA,value);
+  imm(OP_ORA,value);
 end;
 
 procedure TC64.ProgramStart(StartAddress : Word);
